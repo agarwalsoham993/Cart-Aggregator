@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Futuristic DealFinder</title>
+    <title>Prototype</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Load Inter font -->
@@ -27,9 +27,6 @@
             left: 0;
             right: 0;
             bottom: 0;
-            /* This [EP21201 Presentation.jpg] is a special placeholder. 
-              In the real environment, it will be replaced with the image you uploaded.
-            */
             background-image: url('EP21201 Presentation.jpg');
             background-size: cover;
             background-position: center;
@@ -38,7 +35,6 @@
             z-index: -1; /* Place it behind all content */
         }
         
-        /* Custom scrollbar for a more futuristic feel */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -54,7 +50,6 @@
             background: #6366f1; /* indigo-500 */
         }
 
-        /* Custom scrollbar for the horizontal tile rows */
         .horizontal-scrollbar::-webkit-scrollbar {
             height: 8px;
         }
@@ -86,10 +81,6 @@
     <!-- Loading Modal -->
     <div id="loadingModal" class="hidden fixed inset-0 bg-gray-900/90 backdrop-blur-md flex items-center justify-center z-50">
         <div class="text-center">
-            <!-- 
-                NOTE: Updated video source to animation.mp4 for better
-                browser compatibility.
-            -->
             <video width="300" height="300" autoplay loop muted playsinline>
                 <source src="animation.mp4" type="video/mp4">
                 Your browser does not support the video tag.
@@ -98,18 +89,15 @@
         </div>
     </div>
 
-    <!-- Main container for all content -->
     <div class="container mx-auto max-w-full p-4 md:p-8 relative z-10">
         
-        <!-- New Grid Layout -->
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
 
-            <!-- Main Content Column -->
             <div class="lg:col-span-3">
                 <!-- Header -->
                 <header class="text-center mb-8">
                     <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">
-                        DealFinder
+                        Creva AI
                     </h1>
                     <p class="text-lg text-gray-300 mt-2">Your AI-Powered Shopping Aggregator</p>
                 </header>
