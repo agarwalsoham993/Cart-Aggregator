@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Futuristic DealFinder</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Apply Inter font */
+        body {
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Background image pseudo-element */
+        body::before {
+            content: '';
+            position: fixed; /* Use fixed to cover the whole viewport and stay static */
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            /* This [EP21201 Presentation.jpg] is a special placeholder. 
+              In the real environment, it will be replaced with the image you uploaded.
+            */
+            background-image: url('EP21201 Presentation.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; /* Keep bg fixed on scroll */
+            opacity: 0.5; /* Set opacity to 50% */
+            z-index: -1; /* Place it behind all content */
+        }
+        
+        /* Custom scrollbar for a more futuristic feel */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937; /* gray-800 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4f46e5; /* indigo-600 */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6366f1; /* indigo-500 */
+        }
+
+        /* Custom scrollbar for the horizontal tile rows */
+        .horizontal-scrollbar::-webkit-scrollbar {
+            height: 8px;
+        }
+        .horizontal-scrollbar::-webkit-scrollbar-track {
+            background: #374151; /* gray-700 */
+            border-radius: 4px;
+        }
+        .horizontal-scrollbar::-webkit-scrollbar-thumb {
+            background: #4f46e5; /* indigo-600 */
+            border-radius: 4px;
+        }
+        .horizontal-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #6366f1; /* indigo-500 */
+        }
+        
+        /* Hide number input arrows */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen antialiased">
+
+    <!-- Loading Modal -->
+    <div id="loadingModal" class="hidden fixed inset-0 bg-gray-900/90 backdrop-blur-md flex items-center justify-center z-50">
+        <div class="text-center">
+            <!-- 
+                NOTE: Updated video source to animation.mp4 for better
+                browser compatibility.
+            -->
+            <video width="300" height="300" autoplay loop muted playsinline>
+                <source src="animation.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <p class="text-2xl font-semibold text-white mt-4">Optimizing your cart...</p>
+        </div>
+    </div>
+
+    <!-- Main container for all content -->
+    <div class="container mx-auto max-w-full p-4 md:p-8 relative z-10">
+        
+        <!-- New Grid Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+
+            <!-- Main Content Column -->
+            <div class="lg:col-span-3">
+                <!-- Header -->
+                <header class="text-center mb-8">
+                    <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">
+                        DealFinder
+                    </h1>
+                    <p class="text-lg text-gray-300 mt-2">Your AI-Powered Shopping Aggregator</p>
+                </header>
+
+                <!-- Search & List Controls -->
+                <div class="bg-gray-800 p-6 rounded-xl shadow-2xl mb-8">
+                    
+                    <!-- Main Search Input -->
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <input type="text" id="searchInput" class="flex-grow bg-gray-700 border-2 border-gray-600 text-gray-100 text-lg rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-4" placeholder="Search for a product (e.g., 'iPhone 15')">
+                        <button id="searchButton" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-lg text-lg transition duration-200 ease-in-out shadow-lg flex items-center justify-center">
+                            <!-- Search Icon SVG -->
+                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            Search
+                        </button>
+                    </div>
+
+                    <!-- Multi-item Toggle -->
+                    <div class="flex items-center mt-6">
+                        <input id="multiItemToggle" type="checkbox" class="w-5 h-5 text-indigo-500 bg-gray-700 border-gray-600 rounded focus:ring-indigo-600 focus:ring-2">
+                        <label for="multiItemToggle" class="ml-3 text-md font-medium text-gray-300">
+                            Search for multiple items (build a list)
+                        </label>
+                    </div>
+
+                    <!-- Query List Container (hidden by default) -->
+                    <div id="queryListContainer" class="hidden mt-6 pt-6 border-t border-gray-700">
+                        <!-- Header for shopping list with new Optimize button -->
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-2xl font-semibold text-gray-200">My Shopping List</h3>
+                            <button id="optimizeCartButton" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-md transition duration-200 ease-in-out shadow-lg flex items-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17.25h4.5M12 7.5v9.75M3.75 12h16.5M3.75 12a9 9 0 1118 0 9 9 0 01-18 0z"></path></svg>
+                                Optimize Cart
+                            </button>
+                        </div>
+
+                        <ul id="queryList" class="space-y-3">
+                            <!-- List items will be injected here by JS -->
+                        </ul>
+                        <p id="listHelperText" class="text-gray-400 text-sm mt-4">
+                            Your list is empty. Type an item in the search bar above and press <kbd class="px-2 py-1 text-xs font-semibold text-gray-100 bg-gray-600 border border-gray-500 rounded-md">Enter</kbd> to add it.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Message Box (for loading/errors) -->
+                <div id="messageBox" class="text-center p-4 mb-8"></div>
+
+                <!-- Results Container -->
+                <div id="resultsContainer" class="flex flex-col gap-8">
+                    <!-- 
+                        Results will be rendered here.
+                        This container is used for BOTH
+                        1. Search results (horizontal tiles)
+                        2. Optimized cart results (vertical list)
+                    -->
+                </div>
+            </div>
+
+            <!-- New Coupon Sidebar Column -->
+            <div class="lg:col-span-1">
+                <div class="sticky top-8"> <!-- Makes the panel sticky on scroll -->
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-2xl">
+                        <h3 class="text-2xl font-semibold mb-4 text-gray-200">Available Coupons</h3>
+                        <!-- Scrollable list container -->
+                        <div id="couponList" class="space-y-4 max-h-[80vh] overflow-y-auto">
+                            <!-- Coupon items will be injected here by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- End Grid Layout -->
+
+    </div> <!-- End Main Container -->
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Element References ---
+            const searchInput = document.getElementById('searchInput');
+            const searchButton = document.getElementById('searchButton');
+            const multiItemToggle = document.getElementById('multiItemToggle');
+            const queryListContainer = document.getElementById('queryListContainer');
+            const queryList = document.getElementById('queryList');
+            const listHelperText = document.getElementById('listHelperText');
+            const resultsContainer = document.getElementById('resultsContainer');
+            const messageBox = document.getElementById('messageBox');
+            const optimizeCartButton = document.getElementById('optimizeCartButton');
+            const loadingModal = document.getElementById('loadingModal');
+            const couponList = document.getElementById('couponList'); // Get coupon list element
+
+            // --- Application State ---
+            let shoppingList = []; // Array of objects: { id: number, text: string, enabled: boolean }
+            let isLoading = false;
+            // Coupons moved to global state, 'enabled' removed, 'minCartValue' added
+            let mockCoupons = [
+                { id: 1, site: 'Amazon', desc: '10% off Electronics', min: '₹500', minCartValue: 500 },
+                { id: 2, site: 'Flipkart', desc: 'FLAT ₹150 off', min: '₹499', minCartValue: 499 },
+                { id: 3, site: 'Myntra', desc: '20% off New Arrivals', min: '₹299', minCartValue: 299 },
+                { id: 4, site: 'TataCliq', desc: '₹500 off Home Appliances', min: '₹4000', minCartValue: 4000 },
+                { id: 5, site: 'Amazon', desc: '₹100 Cashback on UPI', min: '₹500', minCartValue: 500 },
+                { id: 6, site: 'Myntra', desc: 'Buy 1 Get 1 Free', min: 'Products > ₹499', minCartValue: 499 },
+                { id: 7, site: 'Flipkart', desc: 'Free Shipping', min: '₹200', minCartValue: 200 },
+                { id: 8, site: 'TataCliq', desc: '5% off Credit Card', min: '₹1500', minCartValue: 1500 },
+            ];
+
+            // --- Event Listeners ---
+
+            // Toggle multi-item list mode
+            multiItemToggle.addEventListener('change', () => {
+                const isMultiMode = multiItemToggle.checked;
+                if (isMultiMode) {
+                    queryListContainer.classList.remove('hidden');
+                    searchInput.placeholder = "Type item and press Enter to add to list...";
+                    searchInput.value = ''; // Clear input on mode switch
+                } else {
+                    queryListContainer.classList.add('hidden');
+                    searchInput.placeholder = "Search for a product (e.g., 'iPhone 15')";
+                    searchInput.value = ''; // Clear input on mode switch
+                }
+                updateListHelperText();
+            });
+
+            // Handle main search button click
+            searchButton.addEventListener('click', handleSearch);
+
+            // Handle 'Enter' key in search input
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // Prevent form submission
+                    if (multiItemToggle.checked) {
+                        addToList();
+                    } else {
+                        handleSearch();
+                    }
+                }
+            });
+
+            // Handle clicks within the shopping list (for remove/toggle)
+            queryList.addEventListener('click', (e) => {
+                const target = e.target;
+                const li = target.closest('li');
+                if (!li) return;
+
+                const id = Number(li.dataset.id);
+
+                if (target.type === 'checkbox') {
+                    // Toggle item 'enabled' state
+                    toggleItem(id);
+                } else if (target.closest('.remove-btn')) {
+                    // Remove item from list
+                    removeItem(id);
+                }
+            });
+
+            // Handle "Optimize Cart" button click
+            optimizeCartButton.addEventListener('click', () => {
+                const itemsToOptimize = shoppingList.filter(item => item.enabled);
+                if (itemsToOptimize.length === 0) {
+                    showMessage('Please add items to your list or enable them with the checkbox.', 'error');
+                    return;
+                }
+                
+                // Start optimization process
+                runOptimization(itemsToOptimize);
+            });
+
+            // Handle coupon checkbox changes
+            // This event listener is no longer needed and has been removed.
+            // couponList.addEventListener('change', (e) => { ... });
+
+            // --- Functions ---
+
+            /**
+             * Adds the current searchInput value to the shopping list.
+             */
+            function addToList() {
+                const text = searchInput.value.trim();
+                if (text) {
+                    const newItem = {
+                        id: Date.now(),
+                        text: text,
+                        enabled: true // Default to selected as per request
+                    };
+                    shoppingList.push(newItem);
+                    renderList();
+                    searchInput.value = ''; // Clear input after adding
+                    searchInput.focus();
+                }
+            }
+
+            /**
+             * Toggles the 'enabled' state of a coupon in the state.
+             * This function is no longer needed and has been removed.
+             */
+            // function toggleCoupon(id, isChecked) { ... }
+
+            /**
+             * Re-renders the entire shopping list UI.
+             */
+            function renderList() {
+                queryList.innerHTML = ''; // Clear existing list
+                shoppingList.forEach(item => {
+                    const li = document.createElement('li');
+                    li.dataset.id = item.id;
+                    li.className = 'flex items-center justify-between bg-gray-700 p-3 rounded-lg transition-all duration-200';
+                    li.innerHTML = `
+                        <div class="flex items-center overflow-hidden">
+                            <input 
+                                type="checkbox" 
+                                ${item.enabled ? 'checked' : ''} 
+                                class="item-checkbox w-5 h-5 text-indigo-500 bg-gray-600 border-gray-500 rounded focus:ring-indigo-600 flex-shrink-0"
+                            >
+                            <span class="ml-4 text-lg text-gray-100 truncate" title="${item.text}">
+                                ${item.text}
+                            </span>
+                        </div>
+                        <button class="remove-btn text-red-500 hover:text-red-400 font-medium ml-4 flex-shrink-0">
+                            Remove
+                        </button>
+                    `;
+                    queryList.appendChild(li);
+                });
+                updateListHelperText();
+            }
+
+            /**
+             * Toggles the 'enabled' state of a list item.
+             */
+            function toggleItem(id) {
+                const item = shoppingList.find(i => i.id === id);
+                if (item) {
+                    item.enabled = !item.enabled;
+                    console.log('Updated list:', shoppingList);
+                }
+            }
+
+            /**
+             * Removes an item from the shopping list and re-renders.
+             */
+            function removeItem(id) {
+                shoppingList = shoppingList.filter(i => i.id !== id);
+                renderList();
+            }
+
+            /**
+             * Shows/hides the helper text for the list.
+             */
+            function updateListHelperText() {
+                if (shoppingList.length === 0) {
+                    listHelperText.classList.remove('hidden');
+                } else {
+                    listHelperText.classList.add('hidden');
+                }
+            }
+
+            /**
+             * Initiates the search process based on the current mode.
+             */
+            function handleSearch() {
+                if (isLoading) return;
+
+                const isMultiMode = multiItemToggle.checked;
+                let queries = [];
+
+                if (isMultiMode) {
+                    queries = shoppingList
+                        .filter(item => item.enabled) // Only search for checked items
+                        .map(item => item.text);
+                    
+                    if (queries.length === 0) {
+                        showMessage('Please add or enable items in your list to search.', 'error');
+                        return;
+                    }
+                } else {
+                    const singleQuery = searchInput.value.trim();
+                    if (singleQuery === '') {
+                        showMessage('Please enter a product to search for.', 'error');
+                        return;
+                    }
+                    queries = [singleQuery];
+                }
+
+                runSearch(queries, isMultiMode);
+            }
+
+            /**
+             * Simulates the API call and search execution.
+             */
+            function runSearch(queries, isMultiMode) {
+                isLoading = true;
+                resultsContainer.innerHTML = '';
+                renderCoupons(); // Reset coupon sidebar to default view
+                showMessage('Searching across the web for the best deals...', 'loading');
+
+                // Simulate network delay
+                setTimeout(() => {
+                    isLoading = false;
+                    showMessage('', 'clear');
+                    renderResults(queries, isMultiMode);
+                }, 1500);
+            }
+
+            /**
+             * Renders the mock search results to the page.
+             */
+            function renderResults(queries, isMultiMode) {
+                resultsContainer.innerHTML = ''; // Clear previous results
+                resultsContainer.className = 'flex flex-col gap-8'; // Set base class
+
+                // This layout works for both single and multi-mode.
+                // Each query gets its own "group" with a horizontal scrolling row of tiles.
+                queries.forEach(query => {
+                    const groupEl = document.createElement('div');
+                    groupEl.className = 'bg-gray-800 rounded-xl shadow-lg overflow-hidden';
+                    
+                    let tilesHtml = '';
+                    for (let i = 0; i < 4; i++) { // 4 mock results per product
+                        tilesHtml += createProductTile(query, i);
+                    }
+
+                    groupEl.innerHTML = `
+                        <h3 class="text-2xl font-semibold capitalize p-5 bg-gray-900/50">
+                            Results for "${query}"
+                        </h3>
+                        <!-- Horizontally scrolling container for tiles -->
+                        <div class="flex overflow-x-auto p-5 gap-4 horizontal-scrollbar">
+                            ${tilesHtml}
+                        </div>
+                    `;
+                    resultsContainer.appendChild(groupEl);
+                });
+            }
+
+            /**
+             * Generates mock data and HTML for a single product TILE.
+             */
+            function createProductTile(query, index) {
+                const stores = ['Amazon', 'Flipkart', 'Myntra', 'TataCliq']; // Reduced to 4
+                const store = stores[index % stores.length];
+                const price = (Math.random() * (query.length * 100) + (query.length * 50)).toFixed(0);
+                // Simple title, as the query is in the header
+                const title = `Model ${String.fromCharCode(65 + index)}`; 
+                const placeholderImg = `https://placehold.co/400x300/334155/e2e8f0?text=${query.split(' ')[0]}`;
+
+                return `
+                    <!-- Each tile is a "card" -->
+                    <div class="inline-block flex-shrink-0 w-64 bg-gray-700 rounded-lg shadow-lg overflow-hidden transition-all duration-300 hover:shadow-indigo-500/30 hover:scale-[1.02]">
+                        <img src="${placeholderImg}" alt="Product image" class="w-full h-40 object-cover">
+                        <div class="p-4">
+                            <h4 class="text-lg font-semibold text-indigo-400" title="${store}">
+                                ${store}
+                            </h4>
+                            <p class="text-md text-gray-100 truncate mt-1" title="${title}">${title}</p>
+                            <p class="text-2xl font-bold text-green-400 mt-2">₹${price}</p>
+                            <a href="#" onclick="event.preventDefault()" class="mt-4 inline-block w-full text-center bg-gray-600 hover:bg-indigo-600 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
+                                View Deal
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }
+
+            /**
+             * Displays the loading modal.
+             */
+            function showLoadingModal() {
+                loadingModal.classList.remove('hidden');
+            }
+
+            /**
+             * Hides the loading modal.
+             */
+            function hideLoadingModal() {
+                loadingModal.classList.add('hidden');
+            }
+
+            /**
+             * Simulates the optimization process.
+             */
+            function runOptimization(itemsToOptimize) {
+                showLoadingModal();
+                showMessage('', 'clear'); // Clear any previous messages
+                resultsContainer.innerHTML = ''; // Clear results
+
+                // --- Start complex optimization simulation ---
+                // No longer filters for enabled, it will check ALL coupons
+                const stores = ['Amazon', 'Flipkart', 'Myntra', 'TataCliq'];
+                let optimizedDeals = [];
+                let storeTotals = { Amazon: 0, Flipkart: 0, Myntra: 0, TataCliq: 0 };
+                let baseTotalPrice = 0;
+
+                // 1. Simulate finding best deals and group them by store
+                itemsToOptimize.forEach((item, index) => {
+                    const bestStore = stores[index % stores.length]; // Simulate store
+                    const bestPrice = parseFloat((Math.random() * (item.text.length * 80) + (item.text.length * 40)).toFixed(0));
+                    
+                    optimizedDeals.push({
+                        ...item,
+                        store: bestStore,
+                        price: bestPrice
+                    });
+                    
+                    storeTotals[bestStore] = (storeTotals[bestStore] || 0) + bestPrice;
+                    baseTotalPrice += bestPrice;
+                });
+
+                let suggestedCoupons = [];
+                let unavailableCoupons = [];
+                let totalDiscount = 0;
+
+                // 2. Check ALL coupons against store totals
+                mockCoupons.forEach(coupon => {
+                    const storeTotal = storeTotals[coupon.site] || 0;
+                    const minCartValue = coupon.minCartValue; // Use numeric value
+
+                    if (storeTotal >= minCartValue) {
+                        // This coupon is applicable!
+                        let discount = 0;
+                        if (coupon.desc.includes('%')) {
+                            const percent = parseFloat(coupon.desc.split('%')[0]);
+                            discount = (storeTotal * (percent / 100));
+                        } else if (coupon.desc.includes('FLAT ₹')) {
+                            discount = parseFloat(coupon.desc.replace(/[^0-9.]/g, ''));
+                        } else if (coupon.desc.includes('₹')) {
+                            discount = parseFloat(coupon.desc.match(/₹(\d+)/)[1]);
+                        } else {
+                            discount = 50; // Default discount for "Free Shipping" etc.
+                        }
+                        
+                        // Cap discount at the store total
+                        discount = Math.min(discount, storeTotal); 
+
+                        suggestedCoupons.push({ ...coupon, discount: discount, currentCartValue: storeTotal });
+                        totalDiscount += discount;
+                    } else {
+                        // This coupon is unavailable. Calculate the lag.
+                        const laggingAmount = minCartValue - storeTotal;
+                        unavailableCoupons.push({ ...coupon, laggingAmount: laggingAmount });
+                    }
+                });
+
+                const finalTotalPrice = baseTotalPrice - totalDiscount;
+                // --- End complex optimization simulation ---
+
+                // Create lists for sidebar update
+                // const otherCoupons = ... // No longer needed
+
+                // Simulate a longer delay for "optimization"
+                setTimeout(() => {
+                    hideLoadingModal();
+                    renderOptimizedCouponSidebar(suggestedCoupons, unavailableCoupons); // Re-render sidebar
+                    renderOptimizedCart(optimizedDeals, suggestedCoupons, baseTotalPrice, totalDiscount, finalTotalPrice);
+                }, 3000); // 3-second simulation
+            }
+
+            /**
+             * Renders the optimized cart results.
+             */
+            function renderOptimizedCart(optimizedDeals, suggestedCoupons, baseTotalPrice, totalDiscount, finalTotalPrice) {
+                resultsContainer.innerHTML = ''; // Clear previous results
+                resultsContainer.className = 'flex flex-col gap-8';
+
+                const optimizedGroup = document.createElement('div');
+                optimizedGroup.className = 'bg-gray-800 rounded-xl shadow-lg overflow-hidden';
+
+                let itemsHtml = '';
+                const stores = ['Amazon', 'Flipkart', 'Myntra', 'TataCliq'];
+
+                optimizedDeals.forEach(deal => {
+                    // Simulate finding the best price
+                    itemsHtml += `
+                        <div class="flex flex-col sm:flex-row items-center p-4 border-t border-gray-700/50 hover:bg-gray-700/50 transition duration-200">
+                            <img src="https://placehold.co/100x100/334155/e2e8f0?text=${deal.text.split(' ')[0]}" alt="Product image" class="w-20 h-20 rounded-lg object-cover flex-shrink-0 mb-4 sm:mb-0">
+                            <div class="flex-grow sm:ml-5 text-center sm:text-left">
+                                <h4 class="text-lg font-semibold text-gray-100" title="${deal.text}">
+                                    ${deal.text}
+                                </h4>
+                                <p class="text-sm text-indigo-400 font-medium">${deal.store}</p>
+                            </div>
+                            <div class="flex-shrink-0 sm:ml-5 my-4 sm:my-0 text-center sm:text-right">
+                                <p class="text-2xl font-bold text-green-400">₹${deal.price.toFixed(0)}</p>
+                            </div>
+                            <div class="flex-shrink-0 sm:ml-8 w-full sm:w-auto">
+                                <a href="#" onclick="event.preventDefault()" class="inline-block w-full sm:w-auto text-center bg-gray-600 hover:bg-indigo-600 text-white font-medium py-3 px-6 rounded-lg transition duration-200">
+                                    View Deal
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                let couponHtml = '';
+                if (suggestedCoupons.length > 0) {
+                    couponHtml += `<h4 class="text-xl font-semibold text-gray-200 p-5 border-t border-b border-gray-700">Applied Coupons</h4>`;
+                    couponHtml += '<div class="p-5 space-y-3">';
+                    suggestedCoupons.forEach(coupon => {
+                        couponHtml += `
+                            <div class="flex justify-between items-center text-green-400">
+                                <span>${coupon.site}: ${coupon.desc}</span>
+                                <span class="font-medium">- ₹${coupon.discount.toFixed(0)}</span>
+                            </div>
+                        `;
+                    });
+                    couponHtml += '</div>';
+                }
+
+                // This section is now removed from the cart summary.
+                // if (failedCoupons.length > 0) { ... }
+
+                // Add Total Price summary
+                let totalHtml = `
+                    <div class="p-5 bg-gray-900/50 space-y-3">
+                        <div class="flex justify-between items-center text-xl text-gray-400">
+                            <span>Subtotal:</span>
+                            <span>₹${baseTotalPrice.toFixed(0)}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xl text-green-400">
+                            <span>Coupon Discounts:</span>
+                            <span>- ₹${totalDiscount.toFixed(0)}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-3xl font-bold text-green-400 border-t border-gray-700 pt-3 mt-3">
+                            <span>Optimized Total:</span>
+                            <span>₹${finalTotalPrice.toFixed(0)}</span>
+                        </div>
+                    </div>
+                `;
+
+                optimizedGroup.innerHTML = `
+                    <h3 class="text-2xl font-semibold capitalize p-5 bg-gray-900/50">
+                        Your Optimized Cart
+                    </h3>
+                    <div class="flex flex-col">
+                        ${itemsHtml}
+                    </div>
+                    ${couponHtml}
+                    ${totalHtml}
+                `;
+
+                resultsContainer.appendChild(optimizedGroup);
+            }
+
+
+            /**
+             * Displays a message to the user (loading, error, info).
+             */
+            function showMessage(message, type = 'info') {
+                messageBox.innerHTML = message;
+                messageBox.className = 'text-center p-4 mb-8 rounded-lg ';
+
+                switch (type) {
+                    case 'error':
+                        messageBox.classList.add('bg-red-900/50', 'text-red-300', 'backdrop-blur-sm');
+                        break;
+                    case 'loading':
+                        messageBox.classList.add('bg-blue-900/50', 'text-blue-300', 'backdrop-blur-sm');
+                        messageBox.innerHTML = `
+                            <div class="flex items-center justify-center">
+                                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                ${message}
+                            </div>
+                        `;
+                        break;
+                    case 'clear':
+                        messageBox.innerHTML = '';
+                        messageBox.className = '';
+                        break;
+                    default: // info
+                        messageBox.classList.add('bg-gray-700/50', 'text-gray-300', 'backdrop-blur-sm');
+                }
+            }
+
+            /**
+             * Generates the HTML for a single coupon item (default view).
+             * Checkboxes and failure reasons are removed.
+             */
+            function createCouponItemHtml(coupon) {
+                return `
+                    <div class="coupon-item bg-gray-700 p-4 rounded-lg" data-id="${coupon.id}">
+                        <div class="flex justify-between items-start">
+                            <!-- Coupon details -->
+                            <div class="flex-grow">
+                                <h4 class="text-lg font-semibold text-indigo-400">${coupon.site}</h4>
+                                <p class="text-md text-gray-100 mt-1">${coupon.desc}</p>
+                                <p class="text-sm text-gray-400 mt-2">Min. Cart: <span class="font-medium text-gray-300">${coupon.min}</span></p>
+                            </div>
+                            <!-- Checkbox removed -->
+                        </div>
+                    </div>
+                `;
+            }
+
+            /**
+             * Renders the default list of all mock coupons into the sidebar.
+             */
+            function renderCoupons() {
+                const couponListEl = document.getElementById('couponList');
+                if (!couponListEl) return;
+
+                couponListEl.innerHTML = ''; // Clear
+                mockCoupons.forEach(coupon => {
+                    couponListEl.innerHTML += createCouponItemHtml(coupon);
+                });
+            }
+
+            /**
+             * Renders the optimized coupon list with new data points.
+             */
+            function renderOptimizedCouponSidebar(suggestedList, unavailableList) {
+                const couponListEl = document.getElementById('couponList');
+                if (!couponListEl) return;
+                
+                couponListEl.innerHTML = ''; // Clear the entire sidebar
+                
+                let suggestedHtml = '';
+                suggestedList.forEach(coupon => {
+                    suggestedHtml += `
+                        <div class="bg-gray-700 p-4 rounded-lg" data-id="${coupon.id}">
+                            <h4 class="text-lg font-semibold text-green-400">${coupon.site}</h4>
+                            <p class="text-md text-gray-100 mt-1">${coupon.desc}</p>
+                            <p class="text-lg font-medium text-green-300 mt-2">
+                                Saves: ₹${coupon.discount.toFixed(0)}
+                            </p>
+                            <p class="text-sm text-gray-400 mt-1">
+                                (Your cart: ₹${coupon.currentCartValue.toFixed(0)} / Min: ₹${coupon.minCartValue})
+                            </p>
+                        </div>
+                    `;
+                });
+
+                let unavailableHtml = '';
+                unavailableList.forEach(coupon => {
+                    unavailableHtml += `
+                        <div class="bg-gray-700 p-4 rounded-lg opacity-70" data-id="${coupon.id}">
+                            <h4 class="text-lg font-semibold text-indigo-400">${coupon.site}</h4>
+                            <p class="text-md text-gray-100 mt-1">${coupon.desc}</p>
+                            <p class="text-lg font-medium text-red-400 mt-2">
+                                Need ₹${coupon.laggingAmount.toFixed(0)} more in cart
+                            </p>
+                            <p class="text-sm text-gray-400 mt-1">
+                                (Min: ₹${coupon.minCartValue})
+                            </Example>
+                        </div>
+                    `;
+                });
+
+                couponListEl.innerHTML = `
+                    <h3 class="text-xl font-semibold mb-3 text-green-400">Suggested Coupons</h3>
+                    <div class="space-y-4 mb-6">
+                        ${suggestedHtml.length > 0 ? suggestedHtml : '<p class="text-gray-400 text-sm">No coupons are applicable to your cart.</p>'}
+                    </div>
+                    <h3 class="text-xl font-semibold mt-6 mb-3 text-gray-300">Unavailable Coupons</h3>
+                    <div class="space-y-4">
+                        ${unavailableHtml}
+                    </div>
+                `;
+            }
+
+
+            // --- Initial Load ---
+            renderCoupons(); // Call the function to populate coupons on page load
+
+        });
+    </script>
+</body>
+</html>
